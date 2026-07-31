@@ -130,20 +130,6 @@ button {
    3. Cabeçalho
    ========================================================================== */
 
-/* Logo da empresa — bloco centralizado, acima da barra azul do cabeçalho */
-.brand-logo {
-  display: flex;
-  justify-content: center;
-  padding: 22px 16px 10px;
-  background: var(--bg-page);
-}
-
-.brand-logo__img {
-  width: 150px;      /* dentro da faixa pedida (120–180px) */
-  max-width: 100%;   /* nunca estoura em telas muito estreitas */
-  height: auto;      /* preserva a proporção original — nunca distorce */
-  display: block;
-}
 
 .app-header {
   /* Cor sólida — sem gradiente, de propósito (ver nota de compatibilidade) */
