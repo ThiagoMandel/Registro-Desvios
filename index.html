@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <!-- Declara explicitamente que a página é clara: evita que Chrome/Edge no
+       Android apliquem "Force Dark" automático, que pode transformar
+       gradientes e superfícies em blocos pretos sólidos. -->
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0B5CAB">
+  <title>Registro de Desvios de Produção</title>
+  <!-- Preparação para futura evolução como PWA (ver manifest.json e docs/ARQUITETURA.md) -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+</head>
+<body>
+
+  <!-- Logo da empresa — fica acima do título, em bloco separado do
+       cabeçalho azul, centralizado. -->
+  <div class="brand-logo">
+    <img src="assets/logo/logo_weg.png" alt="Logo WEG" class="brand-logo__img" width="1600" height="1120">
+  </div>
+
+  <!-- Cabeçalho -->
+  <header class="app-header">
+    <div class="app-header__content">
+      <div class="app-header__title">
+        <span class="app-header__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </span>
+        <div>
+          <h1>Registro de Desvios</h1>
+          <p>Controle de qualidade &middot; Chão de fábrica</p>
+        </div>
+      </div>
+      <div class="app-header__badge" id="contadorSessao" title="Desvios registrados nesta sessão">
+        <span id="contadorSessaoValor">0</span> hoje
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <!-- Legenda dos campos obrigatórios -->
+    <p class="form-hint">
+      <svg class="form-hint__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      Campos marcados com <span class="required">*</span> são obrigatórios.
+    </p>
+
+    <form id="formDesvio" novalidate>
+
+      <!-- Seção: Identificação -->
+      <section class="card">
+        <div class="card__header">
+          <span class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </span>
+          <h2>Identificação</h2>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label for="campoData">Data</label>
+            <input type="text" id="campoData" name="data" readonly class="field--readonly">
+          </div>
+
+          <div class="field">
+            <label for="campoHora">Hora</label>
+            <input type="text" id="campoHora" name="hora" readonly class="field--readonly">
+          </div>
+
+          <div class="field field--full">
+            <label for="campoLider">Nome do líder <span class="required">*</span></label>
+            <input type="text" id="campoLider" name="lider" placeholder="Digite o nome completo" required autocomplete="name">
+            <span class="field__error">
+              <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Digite o nome do líder responsável.</span>
+            </span>
+          </div>
+
+          <div class="field field--full" id="fieldTurno">
+            <span class="field__legend">Turno <span class="required">*</span></span>
+            <div class="segmented" role="radiogroup" aria-label="Turno">
+              <input type="radio" id="turno1" name="turno" value="1º Turno" required>
+              <label for="turno1">1º Turno</label>
+              <input type="radio" id="turno2" name="turno" value="2º Turno" required>
+              <label for="turno2">2º Turno</label>
+            </div>
+            <span class="field__error field__error--turno">
+              <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Escolha o turno em que o desvio ocorreu.</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seção: Ordem de Fabricação -->
+      <section class="card">
+        <div class="card__header">
+          <span class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </span>
+          <h2>Ordem de fabricação</h2>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label for="campoOF">OF <span class="required">*</span></label>
+            <input type="text" id="campoOF" name="of" placeholder="Ex: 255660" required inputmode="numeric">
+            <span class="field__error">
+              <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Digite o número da OF para continuar.</span>
+            </span>
+          </div>
+
+          <div class="field">
+            <label for="campoPeca">Peça <span class="required">*</span></label>
+            <input type="text" id="campoPeca" name="peca" placeholder="Ex: PÇ 1" required>
+            <span class="field__error">
+              <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Digite o nome ou código da peça.</span>
+            </span>
+          </div>
+
+          <div class="field field--full">
+            <div class="of-peca-display" id="ofPecaDisplay">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 11H1l8-8 8 8h-8v8"></path>
+              </svg>
+              <span id="ofPecaTexto">Preencha a OF e a peça para visualizar</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seção: Processo e descrição do desvio -->
+      <section class="card">
+        <div class="card__header">
+          <span class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </span>
+          <h2>Processo e descrição do desvio</h2>
+        </div>
+
+        <div class="field-grid">
+          <div class="field field--full">
+            <label for="campoProcesso">Processo <span class="required">*</span></label>
+            <select id="campoProcesso" name="processo" required>
+              <option value="" disabled selected>Selecione o processo</option>
+              <option>Isolamento</option>
+              <option>Rebatimento</option>
+              <option>Bobinagem Secundária</option>
+              <option>Colchão</option>
+              <option>Regulagem</option>
+              <option>Checagem</option>
+              <option>Acoplamento</option>
+              <option>Bobinagem Primária</option>
+              <option>Montagem de Cuba</option>
+              <option>Montagem de Núcleo</option>
+              <option>Montagem de Porcelana</option>
+              <option>Acabamento</option>
+              <option>Acabamento Final</option>
+              <option>Expedição</option>
+              <option>Tratamento de Óleo</option>
+            </select>
+            <span class="field__error">
+              <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Escolha em qual etapa o desvio foi identificado.</span>
+            </span>
+          </div>
+
+          <!-- Campo principal do formulário: o líder descreve livremente o
+               desvio encontrado. Sem categorização por tipo de problema —
+               foi removida a pedido, para tornar o preenchimento mais rápido. -->
+          <div class="field field--full">
+            <label for="campoDescricao">Descrição do desvio <span class="required">*</span></label>
+            <textarea id="campoDescricao" name="descricao" rows="8" maxlength="600" placeholder="Descreva o que foi encontrado, onde e como identificou o desvio" required></textarea>
+            <div class="field__footer">
+              <span class="field__error">
+                <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Conte o que foi encontrado para continuarmos.</span>
+              </span>
+              <span class="char-counter" id="contadorDescricao">0/600</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seção: Evidência -->
+      <section class="card">
+        <div class="card__header">
+          <span class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </span>
+          <h2>Evidência</h2>
+        </div>
+
+        <div class="field-grid">
+          <div class="field field--full">
+            <input type="file" id="campoEvidencia" name="evidencia" accept="image/*" capture="environment" class="visually-hidden">
+
+            <label for="campoEvidencia" class="upload-box" id="uploadBox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span class="upload-box__title">Toque para tirar ou selecionar uma foto</span>
+              <span class="upload-box__subtitle">JPG ou PNG &middot; opcional</span>
+            </label>
+
+            <div class="preview" id="previewWrapper" hidden>
+              <div class="preview__image-wrap">
+                <img id="previewImg" alt="Prévia da evidência selecionada">
+              </div>
+              <div class="preview__info">
+                <span class="preview__name" id="previewFileName"></span>
+                <button type="button" class="btn btn--ghost btn--small" id="btnRemoverImagem">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Remover foto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seção: Comentário ao operador -->
+      <section class="card">
+        <div class="card__header">
+          <span class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path>
+            </svg>
+          </span>
+          <h2>Comentário ao operador</h2>
+        </div>
+
+        <div class="field-grid">
+          <div class="field field--full">
+            <label for="campoComentario">Orientação dada ao operador</label>
+            <textarea id="campoComentario" name="comentario" rows="4" maxlength="600" placeholder="Ex: Parar a produção, refazer a peça, encaminhar para retrabalho..."></textarea>
+            <div class="field__footer">
+              <span></span>
+              <span class="char-counter" id="contadorComentario">0/600</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ações -->
+      <div class="form-actions">
+        <button type="button" class="btn btn--secondary" id="btnLimpar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>Limpar formulário</span>
+        </button>
+
+        <button type="submit" class="btn btn--primary" id="btnRegistrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+          <span id="btnRegistrarTexto">Registrar desvio</span>
+        </button>
+      </div>
+
+    </form>
+  </main>
+
+  <!-- Notificação -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="toast__icon" id="toastIcone" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"></path>
+      </svg>
+    </span>
+    <div class="toast__text">
+      <strong id="toastTitulo">Desvio registrado</strong>
+      <span id="toastMensagem">O registro foi salvo com sucesso.</span>
+    </div>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

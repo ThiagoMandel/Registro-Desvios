@@ -1,0 +1,26 @@
+{
+  "name": "Registro de Desvios de Produção - Balteau",
+  "short_name": "Desvios Balteau",
+  "description": "Sistema de registro de desvios de produção para uso no chão de fábrica - Balteau, Grupo WEG.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0B5CAB",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
