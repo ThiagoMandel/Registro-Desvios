@@ -1,59 +1,76 @@
-# pdf/
+# Registro NC — Balteau / Grupo WEG
 
-Reservada para **implementações futuras relacionadas à geração de PDF**.
+Sistema para líderes de produção registrarem, de forma rápida e
+padronizada, não conformidades encontradas durante a fabricação — gerando
+automaticamente um PDF do registro, com foto de evidência opcional.
 
-## Situação atual
-Hoje o PDF é gerado inteiramente no navegador do usuário, em tempo real,
-usando a biblioteca jsPDF (carregada via CDN dentro de `script.js`). Não
-existe nenhum arquivo de modelo/template — o layout do documento é
-montado por código, função por função, dentro de `script.js`.
+Para o passo a passo de uso no dia a dia, veja
+[docs/GUIA_USO.md](./docs/GUIA_USO.md). Para decisões técnicas e como
+estender o projeto, veja [docs/ARQUITETURA.md](./docs/ARQUITETURA.md).
 
-## Possíveis usos futuros desta pasta
-- **Modelos/templates de PDF**: se o layout evoluir para usar uma
-  biblioteca baseada em templates (em vez de desenhar tudo via código),
-  os arquivos de modelo entrariam aqui.
-- **PDFs de exemplo**: um PDF de referência gerado pelo sistema, útil
-  para validar mudanças de layout sem precisar preencher o formulário
-  inteiro de novo.
-- **Geração no servidor**: caso o projeto evolua para gerar o PDF em um
-  backend (em vez de no navegador) — por exemplo, para permitir
-  reimpressão de registros antigos a partir de um banco de dados —, o
-  código desse serviço poderia viver aqui.
+## Como abrir
 
-Nenhuma dessas evoluções está implementada agora; a pasta existe apenas
-para já reservar o espaço na estrutura do projeto.
-# assets/logo/
+HTML, CSS e JavaScript puros — **sem build step, sem instalação**.
+Basta abrir `index.html` diretamente no navegador (duplo clique) ou
+publicá-lo em qualquer servidor estático. É necessária conexão com a
+internet no momento de registrar uma não conformidade, pois o registro é salvo no
+Supabase e o PDF é gerado com uma biblioteca (jsPDF) carregada via CDN.
 
-Logo oficial da **WEG** (marca-mãe da Balteau), já em uso no sistema.
+Antes de usar pela primeira vez, copie `config/env.example.js` para
+`config/env.js` e preencha com as credenciais do projeto Supabase — veja
+[services/README.md](./services/README.md). Sem esse passo, o app abre
+normalmente, mas o salvamento de registros falha com um aviso claro.
 
-## Arquivo presente
+## Estrutura do projeto
 
-| Arquivo | Origem | Uso |
-|---|---|---|
-| `logo_weg.png` | Rasterizado a partir do vetor original enviado pela empresa (1600×1120px, fundo transparente) | Exibido no topo da página (`index.html`) |
+```
+index.html          → estrutura e conteúdo do formulário
+style.css           → toda a aparência
+manifest.json        → metadados de PWA (preparação futura)
 
-## Onde este arquivo é referenciado
+config/              → constantes e configuração
+  env.js                 credenciais do Supabase — NÃO versionado (ver .gitignore)
+  env.example.js          modelo de env.js, este sim versionado
+  appConfig.js          textos/ícones do toast, tamanho máx. de imagem
+  pdfConfig.js           paleta de cores e proporção da logo no PDF
+  pdfLogoBase64.js       logo da WEG embutida em base64
 
-- **Na página** (`index.html`): `<img src="assets/logo/logo_weg.png">`, dentro do
-  bloco `.brand-logo`, centralizado acima do cabeçalho azul. O tamanho de
-  exibição (150px de largura, altura automática) é controlado inteiramente
-  pelo CSS (`.brand-logo__img` em `style.css`) — o arquivo em si está em
-  resolução mais alta (1600px) de propósito, para continuar nítido em telas
-  de alta densidade de pixels (Retina/celulares modernos).
+services/            → integração com serviços externos
+  supabase.js            conexão e salvamento de registros no Supabase
 
-- **No PDF gerado** (`script.js`): **não** é lido deste arquivo em tempo de
-  execução. Os mesmos bytes estão embutidos como uma constante
-  (`LOGO_WEG_BASE64`) diretamente no `script.js`. Isso é proposital — veja a
-  explicação completa em
-  [`../../docs/ARQUITETURA.md`](../../docs/ARQUITETURA.md#logo-da-weg-no-pdf).
+modules/              → lógica da aplicação, um módulo por responsabilidade
+  dom.js                 referências centralizadas do DOM
+  toast.js                notificações
+  datetime.js             data/hora automáticas
+  ofPeca.js                exibição "OF + Peça"
+  charCounter.js           contadores de caracteres
+  upload.js                upload/prévia/remoção da foto de evidência
+  validation.js            validação do formulário
+  pdfGenerator.js          geração do PDF (jsPDF)
+  formHandler.js           valida, salva no Supabase, gera o PDF e reseta o formulário
 
-## Se o arquivo de logo precisar ser trocado no futuro
+assets/              → logo, ícones e imagens estáticas
+docs/                → documentação de uso e arquitetura
+pdf/                 → reservada para futuras evoluções da geração de PDF
+```
 
-1. Substitua `logo_weg.png` por um arquivo novo (mantenha o nome, ou
-   atualize a referência em `index.html`).
-2. Gere uma nova constante base64 para o PDF e substitua `LOGO_WEG_BASE64`
-   em `script.js` — e ajuste `PROPORCAO_LOGO_WEG` se a proporção
-   largura/altura do novo logo for diferente.
-3. Prefira sempre partir de um arquivo vetorial (SVG) de alta qualidade e
-   rasterizar em resolução alta (1200px+ de largura), para evitar
-   pixelização tanto na tela quanto no PDF.
+Todos os módulos são scripts clássicos (`<script defer>`, sem
+`type="module"`) que se registram em um único namespace global
+`window.RD` — decisão deliberada para manter compatibilidade com a
+abertura via `file://` (duplo clique). Detalhes em
+[docs/ARQUITETURA.md](./docs/ARQUITETURA.md).
+
+## Sobre este projeto
+
+Cada registro é salvo em um banco de dados (Supabase, projeto "Registro
+NC" — ver [supabase/schema.sql](./supabase/schema.sql)) antes de o PDF
+ser gerado. Ainda não existem:
+
+- Armazenamento das fotos de evidência (hoje elas só vão para o PDF).
+- Autenticação de usuário.
+- Dashboard ou relatórios agregados.
+
+Essas são evoluções planejadas, não bugs do estado atual — o
+planejamento de próximas fases (armazenamento de fotos, dashboards,
+autenticação, PWA, integrações) está documentado em
+[docs/ARQUITETURA.md](./docs/ARQUITETURA.md).

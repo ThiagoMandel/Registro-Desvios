@@ -1,7 +1,7 @@
 {
-  "name": "Registro de Desvios de Produção - Balteau",
-  "short_name": "Desvios Balteau",
-  "description": "Sistema de registro de desvios de produção para uso no chão de fábrica - Balteau, Grupo WEG.",
+  "name": "Registro NC - Balteau",
+  "short_name": "Registro NC",
+  "description": "Sistema de registro de não conformidades de produção para uso no chão de fábrica - Balteau, Grupo WEG.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

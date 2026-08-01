@@ -8,7 +8,7 @@
        gradientes e superfícies em blocos pretos sólidos. -->
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#0B5CAB">
-  <title>Registro de Desvios de Produção</title>
+  <title>Registro NC</title>
   <!-- Preparação para futura evolução como PWA (ver manifest.json e docs/ARQUITETURA.md) -->
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
@@ -28,11 +28,11 @@
           </svg>
         </span>
         <div>
-          <h1>Registro de Desvios</h1>
+          <h1>Registro NC</h1>
           <p>Controle de qualidade &middot; Chão de fábrica</p>
         </div>
       </div>
-      <div class="app-header__badge" id="contadorSessao" title="Desvios registrados nesta sessão">
+      <div class="app-header__badge" id="contadorSessao" title="Não conformidades registradas nesta sessão">
         <span id="contadorSessaoValor">0</span> hoje
       </div>
     </div>
@@ -49,7 +49,7 @@
       Campos marcados com <span class="required">*</span> são obrigatórios.
     </p>
 
-    <form id="formDesvio" novalidate>
+    <form id="formNaoConformidade" novalidate>
 
       <!-- Seção: Identificação -->
       <section class="card">
@@ -93,7 +93,7 @@
             </div>
             <span class="field__error field__error--turno">
               <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <span>Escolha o turno em que o desvio ocorreu.</span>
+              <span>Escolha o turno em que a não conformidade ocorreu.</span>
             </span>
           </div>
         </div>
@@ -143,7 +143,7 @@
         </div>
       </section>
 
-      <!-- Seção: Processo e descrição do desvio -->
+      <!-- Seção: Processo e descrição da não conformidade -->
       <section class="card">
         <div class="card__header">
           <span class="card__icon" aria-hidden="true">
@@ -152,7 +152,7 @@
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
           </span>
-          <h2>Processo e descrição do desvio</h2>
+          <h2>Processo e descrição da não conformidade</h2>
         </div>
 
         <div class="field-grid">
@@ -178,16 +178,17 @@
             </select>
             <span class="field__error">
               <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <span>Escolha em qual etapa o desvio foi identificado.</span>
+              <span>Escolha em qual etapa a não conformidade foi identificada.</span>
             </span>
           </div>
 
-          <!-- Campo principal do formulário: o líder descreve livremente o
-               desvio encontrado. Sem categorização por tipo de problema —
-               foi removida a pedido, para tornar o preenchimento mais rápido. -->
+          <!-- Campo principal do formulário: o líder descreve livremente a
+               não conformidade encontrada. Sem categorização por tipo de
+               problema — foi removida a pedido, para tornar o preenchimento
+               mais rápido. -->
           <div class="field field--full">
-            <label for="campoDescricao">Descrição do desvio <span class="required">*</span></label>
-            <textarea id="campoDescricao" name="descricao" rows="8" maxlength="600" placeholder="Descreva o que foi encontrado, onde e como identificou o desvio" required></textarea>
+            <label for="campoDescricao">Descrição da não conformidade <span class="required">*</span></label>
+            <textarea id="campoDescricao" name="descricao" rows="8" maxlength="600" placeholder="Descreva o que foi encontrado, onde e como identificou a não conformidade" required></textarea>
             <div class="field__footer">
               <span class="field__error">
                 <svg class="field__error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -281,7 +282,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span id="btnRegistrarTexto">Registrar desvio</span>
+          <span id="btnRegistrarTexto">Registrar não conformidade</span>
         </button>
       </div>
 
@@ -296,11 +297,33 @@
       </svg>
     </span>
     <div class="toast__text">
-      <strong id="toastTitulo">Desvio registrado</strong>
+      <strong id="toastTitulo">Não conformidade registrada</strong>
       <span id="toastMensagem">O registro foi salvo com sucesso.</span>
     </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <!-- Configuração (ambiente/credenciais, constantes, cores do PDF, logo em base64) -->
+  <!-- config/env.js NÃO é versionado (ver .gitignore) — copie config/env.example.js
+       para criá-lo localmente. Sem ele, RD.env fica vazio e o salvamento no
+       Supabase falha com uma mensagem clara, sem quebrar o restante do app. -->
+  <script src="config/env.js" defer></script>
+  <script src="config/appConfig.js" defer></script>
+  <script src="config/pdfConfig.js" defer></script>
+  <script src="config/pdfLogoBase64.js" defer></script>
+
+  <!-- Serviços externos (Supabase). O SDK em si só é baixado sob demanda,
+       na primeira vez que um registro for salvo — ver services/supabase.js. -->
+  <script src="services/supabase.js" defer></script>
+
+  <!-- Módulos da aplicação — ordem importa: dom.js precisa carregar antes dos demais -->
+  <script src="modules/dom.js" defer></script>
+  <script src="modules/toast.js" defer></script>
+  <script src="modules/datetime.js" defer></script>
+  <script src="modules/ofPeca.js" defer></script>
+  <script src="modules/charCounter.js" defer></script>
+  <script src="modules/upload.js" defer></script>
+  <script src="modules/validation.js" defer></script>
+  <script src="modules/pdfGenerator.js" defer></script>
+  <script src="modules/formHandler.js" defer></script>
 </body>
 </html>

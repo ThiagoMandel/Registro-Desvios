@@ -1,0 +1,8 @@
+# Credenciais locais do Supabase (Project URL + anon key). NUNCA deve ser
+# enviado ao GitHub. Copie config/env.example.js para config/env.js e
+# preencha os valores reais — ver config/env.example.js e services/README.md.
+config/env.js
+
+# Arquivos de sistema operacional / editor
+.DS_Store
+Thumbs.db

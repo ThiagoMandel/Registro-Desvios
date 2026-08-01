@@ -1,4 +1,4 @@
-# Documentação — Registro de Desvios de Produção
+# Documentação — Registro NC
 
 Esta pasta reúne a documentação de apoio ao projeto. Para instruções de
 instalação e publicação, veja o `README.md` na raiz do projeto — aqui

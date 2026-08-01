@@ -14,38 +14,70 @@ Essa escolha foi deliberada: qualquer pessoa com conhecimento básico de
 HTML/CSS/JS consegue abrir e entender o projeto inteiro sem precisar
 instalar `node_modules`, rodar `npm install` ou entender um bundler.
 
-## Estrutura dos três arquivos principais
+## Estrutura dos arquivos principais
 
 ```
 index.html   → estrutura e conteúdo (semântico, sem estilo inline)
 style.css    → toda a aparência (nenhum estilo dentro do HTML ou JS)
-script.js    → toda a lógica (nenhum HTML ou CSS gerado via JS, exceto
-               o necessário para montar o PDF e alternar classes)
+config/      → constantes e configuração (ver "Módulos de JavaScript")
+services/    → integração com serviços externos, hoje o Supabase (ver "Módulos de JavaScript")
+modules/     → toda a lógica (ver "Módulos de JavaScript")
 ```
 
-Os três arquivos precisam estar **na mesma pasta** — `index.html`
-referencia os outros dois por caminho relativo (`style.css`,
-`script.js`). Se um deles for movido ou renomeado isoladamente, os
-caminhos quebram.
+`index.html` referencia `style.css` e cada arquivo de `config/`,
+`services/` e `modules/` por caminho relativo. Se um deles for movido ou
+renomeado isoladamente, os caminhos quebram.
 
 ### `index.html`
-Um único formulário (`#formDesvio`), dividido em seções (`<section
+Um único formulário (`#formNaoConformidade`), dividido em seções (`<section
 class="card">`), cada uma com um `<h2>` e um ícone SVG inline no
 cabeçalho. Todo ícone do sistema é SVG escrito diretamente no HTML —
 isso é proposital (ver nota de compatibilidade abaixo).
 
 ### `style.css`
-Organizado em 15 blocos numerados (tokens, reset, cabeçalho, layout,
+Organizado em 14 blocos numerados (tokens, reset, cabeçalho, layout,
 cards, campos, etc. — veja o índice no topo do próprio arquivo). Usa
 variáveis CSS (`:root { --primary: ...; }`) para centralizar cores,
 espaçamento e tamanhos — trocar a paleta de cores do projeto todo
 significa editar apenas a seção de tokens no topo.
 
-### `script.js`
-Uma única IIFE `(function () { ... })()` para não vazar variáveis
-globais. Dividido por comentários de seção: referências a elementos,
-data/hora automática, exibição "OF + Peça", validação, upload de
-evidência, geração de PDF, e o handler de envio do formulário.
+### Módulos de JavaScript (`config/`, `services/` e `modules/`)
+
+O JavaScript foi dividido em arquivos pequenos, um por responsabilidade,
+carregados como scripts clássicos (`<script defer>`) — **não**
+`type="module"`. Essa escolha é deliberada: módulos ES (`import`/
+`export`) são bloqueados por política de CORS mesmo em `file://` no
+Chrome, o que quebraria a abertura do sistema por duplo clique. Scripts
+clássicos não têm essa restrição.
+
+Cada arquivo é uma IIFE `(function () { ... })()` (para não vazar
+variáveis globais) que registra suas funções/constantes em um único
+namespace compartilhado, `window.RD`. A ordem das tags `<script>` no
+`index.html` importa, pois cada módulo depende do namespace já
+preenchido pelos módulos anteriores:
+
+```
+config/env.js               RD.env.{SUPABASE_URL, SUPABASE_ANON_KEY}   — NÃO versionado (ver .gitignore e config/env.example.js)
+config/appConfig.js        RD.config.{TAMANHO_MAXIMO_MB, ICONE_*, ...}
+config/pdfConfig.js         RD.config.{PDF_CORES, PROPORCAO_LOGO_WEG}
+config/pdfLogoBase64.js     RD.config.LOGO_WEG_BASE64
+services/supabase.js        RD.services.supabase.{getClient, salvarRegistro}   — SDK carregado sob demanda, não no page load
+modules/dom.js              RD.dom.{form, campoData, campoOF, ...}     — precisa vir antes dos demais módulos
+modules/toast.js            RD.toast.mostrar(...)
+modules/datetime.js         RD.datetime.atualizar(...)
+modules/ofPeca.js           RD.ofPeca.atualizar(...)
+modules/charCounter.js      RD.charCounter.ligar(...)
+modules/upload.js           RD.upload.esconderPreview(...)
+modules/validation.js       RD.validation.{validarFormulario, ...}
+modules/pdfGenerator.js     RD.pdf.{gerarPDF, normalizarImagemParaPDF}
+modules/formHandler.js      wiring do submit e do botão "Limpar formulário"
+```
+
+`modules/formHandler.js` é o único que não expõe nada em `RD` — ele
+apenas orquestra os demais módulos (valida, chama `RD.pdf.gerarPDF`,
+mostra toasts, reseta o formulário). Ao adicionar um novo módulo, ele
+deve ser incluído no `index.html` **depois** de `modules/dom.js` e de
+qualquer outro módulo do qual dependa.
 
 ## Nota de compatibilidade: por que não há gradientes nem `mask-image`
 
@@ -71,11 +103,11 @@ e prefira sempre SVG inline a técnicas de CSS mais recentes para
 
 ## Geração de PDF
 
-Toda a lógica de PDF está em `script.js`, na seção "Geração de PDF
-(jsPDF)". O documento é desenhado manualmente, coordenada por
-coordenada (em milímetros, já que o jsPDF é inicializado com `unit:
-'mm', format: 'a4', orientation: 'landscape'`), sem usar nenhum
-template pronto. As cores usadas no PDF (`PDF_CORES`) replicam
+Toda a lógica de PDF está em `modules/pdfGenerator.js`. O documento é
+desenhado manualmente, coordenada por coordenada (em milímetros, já que
+o jsPDF é inicializado com `unit: 'mm', format: 'a4', orientation:
+'landscape'`), sem usar nenhum template pronto. As cores usadas no PDF
+(`RD.config.PDF_CORES`, definidas em `config/pdfConfig.js`) replicam
 manualmente os mesmos tokens de cor do `style.css`, para que o
 documento gerado combine visualmente com o sistema.
 
@@ -85,7 +117,7 @@ O PDF é sempre uma única página, em A4 paisagem (297×210mm), dividida
 em duas colunas dentro de `gerarPDF()`:
 
 - **Coluna esquerda (60%)** — Data, Hora, Líder, Turno, OF, Peça,
-  Processo, Descrição do desvio e Comentário ao operador.
+  Processo, Descrição da não conformidade e Comentário ao operador.
 - **Coluna direita (40%)** — a foto da ocorrência, redimensionada para
   caber inteira na coluna preservando a proporção (nunca distorce).
 
@@ -97,7 +129,7 @@ uma verificação feita depois de desenhar:
 - Os quatro campos fixos do topo (Data/Hora, Líder/Turno, OF/Peça,
   Processo) sempre ocupam a mesma altura (`alturaLinha = 12mm` cada).
 - O espaço que sobra é dividido em duas fatias **fixas**: 62% para a
-  Descrição do desvio, 38% para o Comentário ao operador.
+  Descrição da não conformidade, 38% para o Comentário ao operador.
 - Cada fatia é preenchida pela função `paragrafoAjustado()`, que testa
   tamanhos de fonte decrescentes (de 9pt até 6pt) até o texto caber
   dentro da fatia — em vez de estourar a página, o texto fica um pouco
@@ -125,8 +157,8 @@ sobre a faixa azul do cabeçalho.
 
 A logo **não** é carregada de `assets/logo/logo_weg.png` em tempo de
 execução — os mesmos bytes estão embutidos como uma string base64
-(constante `LOGO_WEG_BASE64`) diretamente no início da seção de PDF em
-`script.js`. Isso foi uma decisão deliberada, não redundância acidental:
+(constante `RD.config.LOGO_WEG_BASE64`) em `config/pdfLogoBase64.js`.
+Isso foi uma decisão deliberada, não redundância acidental:
 
 Testamos que, ao abrir o sistema via `file://` (duplo clique, sem
 servidor), o Chrome bloqueia tanto `fetch('assets/logo/logo_weg.png')`
@@ -152,8 +184,9 @@ nem é instalável ainda. Para completar essa evolução:
 
 1. Adicionar os arquivos de ícone reais em `assets/icons/` (veja o
    README dentro dessa pasta para os tamanhos esperados).
-2. Criar um arquivo `service-worker.js` e registrá-lo em `script.js`
-   com `navigator.serviceWorker.register(...)`.
+2. Criar um arquivo `service-worker.js` e registrá-lo em um novo módulo
+   (ex.: `modules/serviceWorker.js`) com
+   `navigator.serviceWorker.register(...)`.
 3. Definir uma estratégia de cache (ex: cache-first para os arquivos
    estáticos) para permitir uso offline.
 
@@ -164,24 +197,30 @@ Para adicionar um novo campo:
 1. Adicione o HTML dentro da seção (`.card`) apropriada em
    `index.html`, seguindo o padrão `.field` já usado pelos outros
    campos (label + input + span de erro).
-2. Se for obrigatório, adicione a validação correspondente na função
-   `validarFormulario()` em `script.js`.
-3. Inclua o novo campo em `coletarRegistro()` para que ele passe a
-   fazer parte dos dados coletados.
-4. Se o campo deve aparecer no PDF, adicione uma chamada equivalente às
+2. Adicione a referência ao novo elemento em `RD.dom` (`modules/dom.js`).
+3. Se for obrigatório, adicione a validação correspondente na função
+   `validarFormulario()` em `modules/validation.js`.
+4. Inclua o novo campo em `coletarRegistro()`, em `modules/formHandler.js`,
+   para que ele passe a fazer parte dos dados coletados.
+5. Se o campo deve aparecer no PDF, adicione uma chamada equivalente às
    já existentes (`linhaCampos` para campos curtos, ou `paragrafoAjustado`
-   para texto livre) dentro de `gerarPDF()` — lembrando de reservar uma
-   fatia de altura fixa para ele, para manter a garantia de página única
-   (veja a explicação em "Layout: paisagem, 2 colunas, sempre 1 página"
-   acima).
+   para texto livre) dentro de `gerarPDF()`, em `modules/pdfGenerator.js`
+   — lembrando de reservar uma fatia de altura fixa para ele, para manter
+   a garantia de página única (veja a explicação em "Layout: paisagem,
+   2 colunas, sempre 1 página" acima).
+6. Se o campo também deve ser salvo no banco, adicione a coluna em
+   `supabase/schema.sql` e inclua o campo em `mapearRegistroParaLinha()`,
+   em `services/supabase.js`.
 
 ## O que este projeto **não** tem (por decisão, não por esquecimento)
 
-- Sem banco de dados / persistência entre sessões.
 - Sem dashboard ou relatórrios agregados.
 - Sem autenticação de usuário.
 - Sem testes automatizados no repositório (o projeto foi validado
   manualmente durante o desenvolvimento, mas não há suíte de testes
   incluída).
 
-Essas são possíveis próximas fases, não bugs do estado atual.
+Essas são possíveis próximas fases, não bugs do estado atual. O banco de
+dados (Supabase) já existe desde a Fase 1 e passou a ser usado pelo
+formulário na Fase 2 — ver [`../supabase/README.md`](../supabase/README.md)
+e [`../services/README.md`](../services/README.md).
