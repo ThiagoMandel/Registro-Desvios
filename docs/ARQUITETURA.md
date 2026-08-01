@@ -57,7 +57,7 @@ namespace compartilhado, `window.RD`. A ordem das tags `<script>` no
 preenchido pelos módulos anteriores:
 
 ```
-config/env.js               RD.env.{SUPABASE_URL, SUPABASE_ANON_KEY}   — NÃO versionado (ver .gitignore e config/env.example.js)
+config/env.js               RD.env.{SUPABASE_URL, SUPABASE_ANON_KEY}   — versionado (ver config/env.example.js e o motivo em services/README.md)
 config/appConfig.js        RD.config.{TAMANHO_MAXIMO_MB, ICONE_*, ...}
 config/pdfConfig.js         RD.config.{PDF_CORES, PROPORCAO_LOGO_WEG}
 config/pdfLogoBase64.js     RD.config.LOGO_WEG_BASE64

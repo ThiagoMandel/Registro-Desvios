@@ -1,7 +1,9 @@
-# Credenciais locais do Supabase (Project URL + anon key). NUNCA deve ser
-# enviado ao GitHub. Copie config/env.example.js para config/env.js e
-# preencha os valores reais — ver config/env.example.js e services/README.md.
-config/env.js
+# Nota: config/env.js (Project URL + anon key do Supabase) É versionado de
+# propósito, pois o site é publicado via GitHub Pages (puramente estático,
+# sem etapa de build/deploy que possa injetar esse arquivo depois). A anon
+# key é pública por design — protegida pelo Row Level Security em
+# supabase/schema.sql, não por estar fora do repositório. Ver
+# services/README.md para o histórico dessa decisão.
 
 # Arquivos de sistema operacional / editor
 .DS_Store

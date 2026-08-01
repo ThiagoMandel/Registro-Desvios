@@ -20,6 +20,9 @@ Antes de usar pela primeira vez, copie `config/env.example.js` para
 `config/env.js` e preencha com as credenciais do projeto Supabase — veja
 [services/README.md](./services/README.md). Sem esse passo, o app abre
 normalmente, mas o salvamento de registros falha com um aviso claro.
+`config/env.js` é versionado (enviado ao GitHub junto com o resto do
+projeto) — o site é publicado via GitHub Pages, sem nenhuma etapa de
+build/deploy separada que pudesse gerar esse arquivo depois.
 
 ## Estrutura do projeto
 
@@ -29,8 +32,8 @@ style.css           → toda a aparência
 manifest.json        → metadados de PWA (preparação futura)
 
 config/              → constantes e configuração
-  env.js                 credenciais do Supabase — NÃO versionado (ver .gitignore)
-  env.example.js          modelo de env.js, este sim versionado
+  env.js                 credenciais do Supabase — versionado (publicado no GitHub Pages)
+  env.example.js          modelo de env.js para configurar um clone local do zero
   appConfig.js          textos/ícones do toast, tamanho máx. de imagem
   pdfConfig.js           paleta de cores e proporção da logo no PDF
   pdfLogoBase64.js       logo da WEG embutida em base64

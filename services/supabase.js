@@ -6,10 +6,8 @@
   RD.services = RD.services || {};
 
   // A Project URL e a anon key NÃO ficam neste arquivo — elas vêm de
-  // config/env.js (não versionado; ver config/env.example.js e
-  // services/README.md para como configurar). Isso mantém as credenciais
-  // fora do código-fonte enviado ao GitHub, mesmo este projeto não tendo
-  // build step.
+  // config/env.js (ver config/env.example.js e services/README.md para
+  // como configurar e por que esse arquivo também é versionado).
   function obterConfiguracaoAmbiente() {
     return (window.RD && window.RD.env) || {};
   }

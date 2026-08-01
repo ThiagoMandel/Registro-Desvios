@@ -303,9 +303,10 @@
   </div>
 
   <!-- Configuração (ambiente/credenciais, constantes, cores do PDF, logo em base64) -->
-  <!-- config/env.js NÃO é versionado (ver .gitignore) — copie config/env.example.js
-       para criá-lo localmente. Sem ele, RD.env fica vazio e o salvamento no
-       Supabase falha com uma mensagem clara, sem quebrar o restante do app. -->
+  <!-- config/env.js é versionado (publicado junto no GitHub Pages — ver
+       services/README.md). Se faltar ou estiver vazio, RD.env fica vazio e
+       o salvamento no Supabase falha com uma mensagem clara, sem quebrar o
+       restante do app. -->
   <script src="config/env.js" defer></script>
   <script src="config/appConfig.js" defer></script>
   <script src="config/pdfConfig.js" defer></script>

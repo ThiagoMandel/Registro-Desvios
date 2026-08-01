@@ -40,31 +40,41 @@ nenhum registro é salvo até a configuração ser preenchida.
 
 ## Configuração de credenciais (`config/env.js`)
 
-A Project URL e a anon key do Supabase **não ficam em nenhum arquivo
-versionado**. Elas vêm de `config/env.js`, que é carregado como um
-`<script>` normal em `index.html` (antes de `services/supabase.js`) e
-está listado no `.gitignore` da raiz do projeto — ou seja, nunca é
-enviado ao GitHub.
+A Project URL e a anon key do Supabase vêm de `config/env.js`, que é
+carregado como um `<script>` normal em `index.html` (antes de
+`services/supabase.js`).
 
-- **Versionado**: `config/env.example.js` — modelo com os dois campos
-  vazios e instruções em comentário.
-- **Não versionado**: `config/env.js` — arquivo real, com os valores
-  preenchidos, que cada pessoa/ambiente cria localmente a partir do
-  exemplo. Sem ele (ou com os campos vazios), o app continua abrindo
-  normalmente; só o salvamento no Supabase fica indisponível, com o
-  aviso claro descrito acima.
+- `config/env.example.js` — modelo com os dois campos vazios e
+  instruções em comentário. Serve para configurar um clone local do zero.
+- `config/env.js` — arquivo real, com os valores preenchidos.
 
-Essa abordagem (arquivo de config separado + `.gitignore`, em vez de
-`fetch()` de um `.env`) foi escolhida porque este projeto precisa
-continuar abrindo via `file://` (duplo clique) — e `fetch()` é bloqueado
-nesse protocolo, exatamente como já documentado para a logo em
-[`../docs/ARQUITETURA.md`](../docs/ARQUITETURA.md). Um `<script>`
-clássico não tem essa restrição.
+**Os dois arquivos são versionados** (enviados ao GitHub). Isso mudou em
+relação à primeira versão desta configuração: originalmente
+`config/env.js` era propositalmente deixado de fora do repositório
+(`.gitignore`), pensando em um fluxo de desenvolvimento local. Só que o
+site é publicado via **GitHub Pages** — puramente estático, direto a
+partir do conteúdo do repositório, sem nenhuma etapa de build/deploy que
+pudesse gerar ou injetar esse arquivo depois. Deixar `config/env.js` fora
+do Git significava que ele nunca existia no site publicado, e o
+salvamento no Supabase falhava sempre em produção. Por isso ele passou a
+ser versionado como qualquer outro arquivo do projeto.
 
-Importante: isso mantém a anon key fora do repositório, não fora do
-navegador — como qualquer chave pública de cliente, ela continua visível
-a quem inspecionar o site publicado. A proteção real dos dados é o Row
-Level Security, já configurado em `supabase/schema.sql`.
+Isso continua seguro porque a anon key do Supabase é uma chave pública
+por design — ela sempre é enviada, dentro do próprio JavaScript, a todo
+visitante do site publicado, esteja o arquivo que a contém versionado ou
+não; não existe versão "secreta" dela num app cliente puro como este. A
+proteção real dos dados é o Row Level Security, já configurado em
+`supabase/schema.sql`: o papel `anon` só pode inserir registros, nunca
+lê-los. A única credencial que precisa permanecer secreta é a
+`service_role key`, que este projeto nunca usa e nunca deve usar em
+código que roda no navegador.
+
+Essa abordagem (arquivo de config separado carregado como `<script>`, em
+vez de `fetch()` de um `.env`) segue sendo necessária pelo motivo já
+documentado em [`../docs/ARQUITETURA.md`](../docs/ARQUITETURA.md): o
+projeto também precisa continuar abrindo via `file://` (duplo clique), e
+`fetch()` é bloqueado nesse protocolo — um `<script>` clássico não tem
+essa restrição.
 
 ## Mapeamento de campos
 
